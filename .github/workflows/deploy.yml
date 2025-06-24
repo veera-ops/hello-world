@@ -21,7 +21,7 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
-
+      
     - name: Set ECR repository based on branch
       run: |
         BRANCH_NAME=$(echo "${GITHUB_REF##*/}")
@@ -35,7 +35,13 @@ jobs:
           echo "Unsupported branch: $BRANCH_NAME"
           exit 1
         fi
-
+    - name: Get commit hash
+      id: get-commit-hash
+      run: echo "::set-output name=commit-hash::$(git rev-parse --short HEAD)"
+    - name: Get timestamp
+      id: get-timestamp
+      run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
+    
     - name: Build Docker image
       id: build-image
       env:
