@@ -1,3 +1,4 @@
+
 name: Build and Push to ECR
 
 on:
@@ -22,9 +23,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Log in to Amazon ECR
-      uses: aws-actions/amazon-ecr-login@v1
-
     - name: Set ECR repository based on branch
       run: |
         BRANCH_NAME=$(echo "${GITHUB_REF##*/}")
@@ -38,8 +36,10 @@ jobs:
           echo "Unsupported branch: $BRANCH_NAME"
           exit 1
         fi
+
     - name: Build Docker image
       run: |
+        echo "Building image: ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA}"
         docker build -t ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA} .
 
     - name: Push Docker image to ECR
