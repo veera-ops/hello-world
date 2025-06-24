@@ -42,8 +42,8 @@ jobs:
     - name: Build Docker image
       run: |
         echo "Building image: ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:$IMAGE_TAG .
-        docker build -t ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
 
     - name: Push Docker image to ECR
       run: |
-        docker push ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
