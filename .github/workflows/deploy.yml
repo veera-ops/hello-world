@@ -37,7 +37,7 @@ jobs:
         else
           echo "Unsupported branch: $BRANCH_NAME"
           exit 1
-
+        fi
     - name: Build Docker image
       run: |
         docker build -t ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA} .
