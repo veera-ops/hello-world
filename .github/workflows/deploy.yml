@@ -25,26 +25,28 @@ jobs:
     - name: Log in to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Set ECR repository based on branch
+	- name: Set ECR repository based on branch
       id: set-repo
-      run: |
-        BRANCH_NAME="${GITHUB_REF##*/}"
+	  run: |
+	    BRANCH_NAME="${GITHUB_REF##*/}"
         if [ "$BRANCH_NAME" = "dev" ]; then
-          echo "REPO_NAME=${{ secrets.ECR_REPO_DEV }}" >> $GITHUB_ENV
+          echo "repo_name=${{ secrets.ECR_REPO_DEV }}" >> $GITHUB_OUTPUT
         elif [ "$BRANCH_NAME" = "qa" ]; then
-          echo "REPO_NAME=${{ secrets.ECR_REPO_QA }}" >> $GITHUB_ENV
+          echo "repo_name=${{ secrets.ECR_REPO_QA }}" >> $GITHUB_OUTPUT
         elif [ "$BRANCH_NAME" = "master" ]; then
-          echo "REPO_NAME=${{ secrets.ECR_REPO_MASTER }}" >> $GITHUB_ENV
+          echo "repo_name=${{ secrets.ECR_REPO_MASTER }}" >> $GITHUB_OUTPUT
         else
           echo "Unsupported branch: $BRANCH_NAME"
-          exit 1
+        exit 1
         fi
 
-    - name: Build Docker image
+	- name: Build Docker image
       run: |
-        echo "Building image: ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA}"
-        docker build -t ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA} .
+        IMAGE_URI=${{ secrets.ECR_REGISTRY }}/${{ steps.set-repo.outputs.repo_name }}:${GITHUB_SHA}
+        echo "Building image: $IMAGE_URI"
+        docker build -t $IMAGE_URI .
 
-    - name: Push Docker image to ECR
-      run: |
-        docker push ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA}
+	- name: Push Docker image to ECR
+	  run: |
+        IMAGE_URI=${{ secrets.ECR_REGISTRY }}/${{ steps.set-repo.outputs.repo_name }}:${GITHUB_SHA}
+        docker push $IMAGE_URI
