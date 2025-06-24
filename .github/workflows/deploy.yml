@@ -1,0 +1,63 @@
+name: Build, Test, and Deploy to ECR
+
+on:
+  push:
+    branches:
+      - dev
+      - qa
+      - master
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Compile Java code
+      run: javac HelloWorld.java HelloWorldTest.java
+
+    - name: Run tests
+      run: |
+        curl -O https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.9.3/junit-platform-console-standalone-1.9.3.jar
+        java -jar junit-platform-console-standalone-1.9.3.jar --class-path . --scan-class-path
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Set ECR repository based on branch
+      run: |
+        BRANCH_NAME=$(echo "${GITHUB_REF##*/}")
+        if [ "$BRANCH_NAME" = "dev" ]; then
+          echo "REPO_NAME=${{ secrets.ECR_REPO_DEV }}" >> $GITHUB_ENV
+        elif [ "$BRANCH_NAME" = "qa" ]; then
+          echo "REPO_NAME=${{ secrets.ECR_REPO_QA }}" >> $GITHUB_ENV
+        elif [ "$BRANCH_NAME" = "master" ]; then
+          echo "REPO_NAME=${{ secrets.ECR_REPO_MASTER }}" >> $GITHUB_ENV
+        else
+          echo "Unsupported branch: $BRANCH_NAME"
+          exit 1
+        fi
+
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA} .
+
+    - name: Push Docker image to ECR
+      run: docker push ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:${GITHUB_SHA}
