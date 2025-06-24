@@ -39,14 +39,11 @@ jobs:
           echo "Unsupported branch: $BRANCH_NAME"
         exit 1
         fi
-
-	- name: Build Docker image
+    - name: Build Docker image
       run: |
-        IMAGE_URI=${{ secrets.ECR_REGISTRY }}/${{ steps.set-repo.outputs.repo_name }}:${GITHUB_SHA}
-        echo "Building image: $IMAGE_URI"
-        docker build -t $IMAGE_URI .
+        echo "Building image: ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:$IMAGE_TAG .
+        docker build -t ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:$IMAGE_TAG .
 
-	- name: Push Docker image to ECR
-	  run: |
-        IMAGE_URI=${{ secrets.ECR_REGISTRY }}/${{ steps.set-repo.outputs.repo_name }}:${GITHUB_SHA}
-        docker push $IMAGE_URI
+    - name: Push Docker image to ECR
+      run: |
+        docker push ${{ secrets.ECR_REGISTRY }}/$REPO_NAME:$IMAGE_TAG
